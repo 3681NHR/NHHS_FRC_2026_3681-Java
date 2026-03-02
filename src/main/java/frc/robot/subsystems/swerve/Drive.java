@@ -389,7 +389,7 @@ public class Drive extends SubsystemBase {
      */
     public void runVelocity(ChassisSpeeds speeds) {
         // Calculate module setpoints
-        ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(speeds, 0.02);
+        ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(speeds, Constants.EVENT_LOOP_TIME);
         SwerveModuleState[] setpointStates = kinematics.toSwerveModuleStates(discreteSpeeds);
         SwerveDriveKinematics.desaturateWheelSpeeds(setpointStates, getMaxLinearSpeedMetersPerSec());
 
@@ -623,7 +623,7 @@ public class Drive extends SubsystemBase {
 
     /** spins robot */
     public void runAngleCharacterization(double output) {
-        ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(new ChassisSpeeds(0, 0, 1), 0.02);
+        ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(new ChassisSpeeds(0, 0, 1), Constants.EVENT_LOOP_TIME);
         SwerveModuleState[] setpointStates = kinematics.toSwerveModuleStates(discreteSpeeds);
         
         for (int i = 0; i < 4; i++) {

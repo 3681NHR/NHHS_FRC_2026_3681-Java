@@ -1,6 +1,7 @@
 package frc.utils.LEDAnim;
 
 import edu.wpi.first.wpilibj.util.Color;
+import frc.robot.constants.Constants;
 import frc.utils.ExtraMath;
 
 public class LEDAnim {
@@ -32,7 +33,7 @@ public class LEDAnim {
     }
     public void update(){
         if(scroll != 0){
-            scrollShift += scroll * 0.02;
+            scrollShift += scroll * Constants.EVENT_LOOP_TIME;
             leds = offset(new LEDAnim(initLeds), scrollShift, true).getLEDs();
         }
     }

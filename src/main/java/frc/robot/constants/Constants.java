@@ -25,13 +25,14 @@ public final class Constants {
     public static final Time AUTO_TIME = Seconds.of(20);
     public static final Time TELEOP_TIME = Seconds.of(140);// 2:20
     public static final Time ENDGAME_TIME = Seconds.of(30);// time remaining in teleop when endgame starts
-
+    public static final double EVENT_LOOP_TIME = 0.02; // 20ms
     // default robot pose
     public static final Pose2d STARTING_POSE = new Pose2d(new Translation2d(8.75, 4), Rotation2d.fromDegrees(0));
 
     public static final Mass ROBOT_MASS = Pounds.of(115);
     public static final Time LOOP_TIME = Milliseconds.of(0.13); // 20ms + 110ms spark max velocity lag
-
+    // 3742, thanks Mr. B
+    public static final int ELASTIC_LAYOUT_PORT = 3742;
     public static class OperatorConstants {
         // Joystick Deadbands, radial from center
         public static final double LEFT_DEADBAND = 0.1;
@@ -51,4 +52,22 @@ public final class Constants {
         //if robot should have field oriented drive enabled on start
         public static final boolean STARTING_FOD = true;
     }
+
+    public static class DPAD {
+        public static final int UP = 0;
+        public static final int RIGHT = 90;
+        public static final int DOWN = 180;
+        public static final int LEFT = 270;
+        public static final int NONE = -1;
+        public static final int RIGHT_UP = 45;
+        public static final int RIGHT_DOWN = 135;
+        public static final int LEFT_DOWN = 225;
+        public static final int LEFT_UP = 315;
+        private DPAD() {
+            throw new UnsupportedOperationException("This is a utility class!");
+        }
+    }
+
+    public static final int SPARKMAX_TARGET_FIRMWARE = 436273156;
+    public static final int TALONFX_TARGET_FIRMWARE = 436273152;
 }

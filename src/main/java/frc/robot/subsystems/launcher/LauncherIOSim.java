@@ -9,6 +9,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.simulation.LinearSystemSim;
+import frc.robot.constants.Constants;
 import frc.utils.controlWrappers.PID;
 import frc.utils.controlWrappers.SimpleFF;
 
@@ -32,8 +33,10 @@ public class LauncherIOSim implements LauncherIO {
     private final LinearSystemSim<N2, N1, N2> sim = new LinearSystemSim<N2, N1, N2>(model, 0.01, 0.1);
     @Override
     public void updateInputs(LauncherIOInputs input){
-        sim.update(0.02);
-        speed = RadiansPerSecond.of(sim.getOutput().get(0,1));
+        sim.update(Constants.EVENT_LOOP_TIME);
+        filter.predict(VecBuilder.fill(vout.in(Volts) - Math.min(LAUNCHER_ID_GAINS.kS, Math.abs(vout.in(Volts)))*Math.signum(sim.getOutput().get(1,0))), Constants.EVENT_LOOP_TIME);
+        filter.correct(VecBuilder.fill(vout.in(Volts) - Math.min(LAUNCHER_ID_GAINS.kS, Math.abs(vout.in(Volts)))*Math.signum(sim.getOutput().get(1,0))), sim.getOutput());
+        speed = RadiansPerSecond.of(filter.getXhat().get(1,0));
 
         if(!openLoop){
             vout = Volts.of(pid.calculate(speed.in(RPM), goal.in(RPM)));

@@ -8,7 +8,7 @@ public class Indexer extends SubsystemBase {
     IndexerIOInputsAutoLogged in = new IndexerIOInputsAutoLogged();
 
     public Indexer(){
-
+        
     }
 
     @Override
