@@ -4,12 +4,8 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
-import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.util.Color;
-
-import static edu.wpi.first.units.Units.Radians;
 
 import java.lang.Math;
 import java.util.ArrayList;
@@ -18,11 +14,6 @@ import java.util.ArrayList;
  * extra math utils
  */
 public final class ExtraMath {
-    
-
-    public static Angle getAngleToPos(Translation2d target, Translation2d curr){
-        return Radians.of(Math.atan2(target.getY()-curr.getY(), target.getX()-curr.getX()));
-    }
 
     public static double mean(double... in){
         double sum = 0;

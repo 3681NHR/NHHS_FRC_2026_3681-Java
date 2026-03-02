@@ -11,7 +11,6 @@ import frc.robot.constants.TurretConstants;
 import frc.robot.constants.Constants.OperatorConstants;
 import frc.robot.constants.VisionConstants;
 import frc.robot.subsystems.Led;
-import frc.robot.subsystems.SOTMSolver;
 import frc.robot.subsystems.launchLUT;
 import frc.robot.subsystems.fuelVision.FuelVision;
 import frc.robot.subsystems.fuelVision.FuelVisionIOPhoton;
@@ -84,7 +83,6 @@ import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
@@ -296,7 +294,7 @@ public class RobotContainer {
         LoggedPowerDistribution.getInstance(pdp.getModule(), ModuleType.kRev);
 
         turret.setDefaultCommand(
-            turret.manPos(turret::getAngle ,false).ignoringDisable(true)
+            turret.manPos(turret::getAngle).ignoringDisable(true)
         );
 
         launcher.setDefaultCommand(
@@ -344,28 +342,28 @@ public class RobotContainer {
         }));
         
         // TODO: placeholder binding to shooting in sim, remove before running on robot
-        new Trigger(() -> driverController.getRawAxis(RIGHT_TRIGGER) > 0.7 && Robot.isSimulation()).whileTrue(new InstantCommand(() -> {
-                double launchvel = (launcher.getSpeed().in(RPM)-2500)*2*Math.PI*Units.inchesToMeters(2)/60;
-                double angle = SOTMSolver.getInstance().getParams(false).hoodAngle().plus(Degrees.of(90)).in(Radians);
-                GamePieceProjectile fuel = new GamePieceProjectile(
-                        RebuiltFuelOnField.REBUILT_FUEL_INFO,
-                        driveSim.getSimulatedDriveTrainPose().getTranslation().plus(new Translation2d(
-                                Math.cos(drive.getRotation().getRadians())*TURRET_OFFSET.getX(),
-                                Math.sin(drive.getRotation().getRadians())*TURRET_OFFSET.getX()
-                        )),
-                        new Translation2d(
-                                ChassisSpeeds.fromRobotRelativeSpeeds(drive.getChassisSpeeds(), drive.getRotation()).vxMetersPerSecond + (Math.cos(drive.getRotation().getRadians() + turret.getAngle().in(Radians))*Math.cos(angle)*launchvel),
-                                ChassisSpeeds.fromRobotRelativeSpeeds(drive.getChassisSpeeds(), drive.getRotation()).vyMetersPerSecond + (Math.sin(drive.getRotation().getRadians() + turret.getAngle().in(Radians))*Math.cos(angle)*launchvel)
-                        ),
-                        Units.inchesToMeters(20),
-                        Math.sin(angle)*launchvel,
-                        new Rotation3d()
-                        );
+        // new Trigger(() -> driverController.getRawAxis(RIGHT_TRIGGER) > 0.7).whileTrue(new InstantCommand(() -> {
+        //         double launchvel = (launcher.getSpeed().in(RPM)-2500)*2*Math.PI*Units.inchesToMeters(2)/60;
+        //         double angle = launchLUT.get(target.getDistance(turret.getFieldPos()), true, launchLUT.LUTHub)[0];
+        //         GamePieceProjectile fuel = new GamePieceProjectile(
+        //                 RebuiltFuelOnField.REBUILT_FUEL_INFO,
+        //                 driveSim.getSimulatedDriveTrainPose().getTranslation().plus(new Translation2d(
+        //                         Math.cos(drive.getRotation().getRadians())*TURRET_OFFSET.getX(),
+        //                         Math.sin(drive.getRotation().getRadians())*TURRET_OFFSET.getX()
+        //                 )),
+        //                 new Translation2d(
+        //                         ChassisSpeeds.fromRobotRelativeSpeeds(drive.getChassisSpeeds(), drive.getRotation()).vxMetersPerSecond + Math.cos(drive.getRotation().getRadians() + turret.getAngle().in(Radians))*Math.cos(angle)*launchvel,
+        //                         ChassisSpeeds.fromRobotRelativeSpeeds(drive.getChassisSpeeds(), drive.getRotation()).vyMetersPerSecond + Math.sin(drive.getRotation().getRadians() + turret.getAngle().in(Radians))*Math.cos(angle)*launchvel
+        //                 ),
+        //                 Units.inchesToMeters(20),
+        //                 Math.sin(angle)*launchvel,
+        //                 new Rotation3d()
+        //                 );
                 
-                fuel.withTouchGroundHeight(Inches.of(3).in(Meters));
-                fuel.enableBecomesGamePieceOnFieldAfterTouchGround();
-                SimulatedArena.getInstance().addGamePieceProjectile(fuel);
-        }).andThen(new WaitCommand(0.1)).repeatedly());
+        //         fuel.withTouchGroundHeight(Inches.of(3).in(Meters));
+        //         fuel.enableBecomesGamePieceOnFieldAfterTouchGround();
+        //         SimulatedArena.getInstance().addGamePieceProjectile(fuel);
+        // }).andThen(new WaitCommand(0.1)).repeatedly());
 
         // force teleop drive
         new Trigger(() -> driverController.getPOV() == 0).onTrue(drive.TeleopDrive());
@@ -374,7 +372,7 @@ public class RobotContainer {
 
         //launcher spin and shoot
         new Trigger(() -> driverController.getRawAxis(RIGHT_TRIGGER) > 0.2).whileTrue(
-            launcher.velocityControl(() -> launchLUT.get(Meters.of(target.getDistance(turret.getFieldPos())), true, launchLUT.LUTHub).speed())
+            launcher.velocityControl(() -> RPM.of(launchLUT.get(target.getDistance(turret.getFieldPos()), true, launchLUT.LUTHub)[1]))
         );
         // new Trigger(() -> driverController.getRawAxis(RIGHT_TRIGGER) > 0.7).whileTrue(
         //     null// TODO: feed to shooter while spun up
@@ -385,7 +383,7 @@ public class RobotContainer {
         );
         //set turret to preset angle mode
         new Trigger(() -> driverController.getRawButton(A)).onTrue(
-            turret.manPos(() -> Degrees.of(0), false)
+            turret.manPos(() -> Degrees.of(0))
         );
         //intake
         // new Trigger(() -> driverController.getRawAxis(LEFT_TRIGGER) > 0.5).whileTrue(
@@ -405,7 +403,6 @@ public class RobotContainer {
     public void Periodic() {
         rumbler.update(0.02);
         PIDTuner.updateTunables();
-        SOTMSolver.getInstance().setTarget(target);
         driverDisconnected.set(!driverController.isConnected());
         operatorDisconnected.set(!operatorController.isConnected());
         
@@ -460,12 +457,5 @@ public class RobotContainer {
 
     public Drive getDrive() {
         return drive;
-    }
-
-    public Command getTrackCommand(){
-        return new ParallelCommandGroup(
-            turret.trackWithLead(),
-            launcher.velocityControl(() -> SOTMSolver.getInstance().getParams(false).speed())
-        );
     }
 }

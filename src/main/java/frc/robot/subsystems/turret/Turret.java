@@ -6,8 +6,7 @@ import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.Seconds;
-import static frc.robot.constants.TurretConstants.*;
-import static frc.robot.constants.TurretConstants.TURRET_ANGLE_REVERSE_LIM;
+import static frc.robot.constants.TurretConstants.TURRET_ANGLE_LIM;
 import static frc.robot.constants.TurretConstants.TURRET_OFFSET;
 import static frc.robot.constants.TurretConstants.TURRET_SYSID_CONFIG;
 import static frc.robot.constants.TurretConstants.TURRET_THETA_COMP_FACTOR;
@@ -27,10 +26,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.subsystems.SOTMSolver;
 import frc.robot.subsystems.launchLUT;
 import frc.robot.subsystems.swerve.Drive;
-import frc.utils.ExtraMath;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 
@@ -59,7 +56,9 @@ public class Turret extends SubsystemBase {
         //init log values
         Logger.recordOutput("Subsystems/Turret/track/angle targeted", Double.NaN, Rotations);
         Logger.recordOutput("Subsystems/Turret/track/init angle targeted", Double.NaN, Rotations);
+        Logger.recordOutput("Subsystems/Turret/track/lead time", Double.NaN, Seconds);
         Logger.recordOutput("Subsystems/Turret/track/target pos", (Translation2d)null);
+        Logger.recordOutput("Subsystems/Turret/track/virtual target pos", (Translation2d)null);
     
         Logger.recordOutput("Subsystems/Turret/manual/target", Double.NaN, Rotations);
     }
@@ -77,20 +76,16 @@ public class Turret extends SubsystemBase {
         Logger.recordOutput("Subsystems/Turret/field angle", in.angle.plus(Radians.of(drive.getRotation().getRadians())).plus(DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red ? Degrees.of(180) : Degrees.of(0)));
     }
 
-    public Command manPos(Supplier<Angle> targ, boolean fieldOriented){
+    public Command manPos(Supplier<Angle> targ){
         return Commands.run(() -> {
-            Angle angle = targ.get();
-            
-            if(fieldOriented){
-                angle = angle
-                .minus(Radians.of(drive.getPose().getRotation().getRadians()))
-                .plus(Radians.of(TURRET_THETA_COMP_FACTOR*drive.getAngulerVelocity().in(RadiansPerSecond)));
+            if(targ.get().abs(Radian) <= TURRET_ANGLE_LIM.in(Radians)){
+                io.setGoal(targ.get());
+                ready = in.atSetpoint;
+            } else {
+                ready = false;
             }
-
-            io.setGoal(angle);
-            ready = in.atSetpoint;
-
-            Logger.recordOutput("Subsystems/Turret/manual/target", angle);
+            illegalTarg.set(targ.get().abs(Radian) > TURRET_ANGLE_LIM.in(Radians));
+            Logger.recordOutput("Subsystems/Turret/manual/target", targ.get());
         }, this).finallyDo(() -> {
             Logger.recordOutput("Subsystems/Turret/manual/target", Double.NaN);
         }).withName("manual angle");
@@ -100,9 +95,16 @@ public class Turret extends SubsystemBase {
         return Commands.run(() -> {
             double dist = targ.get().getDistance(getFieldPos());
             Logger.recordOutput("Subsystems/Turret/track/distance", dist);
- 
-            Angle angle = ExtraMath.getAngleToPos(
-                targ.get(), //target(offset for lead)
+            double timeOfFlight = launchLUT.get(dist, true, launchLUT.LUTHub)[2];
+
+            Translation2d virtualTarg = targ.get()
+                        .plus(new Translation2d(//lead shot
+                            ChassisSpeeds.fromRobotRelativeSpeeds(drive.getChassisSpeeds(), drive.getRotation()).vxMetersPerSecond,
+                            ChassisSpeeds.fromRobotRelativeSpeeds(drive.getChassisSpeeds(), drive.getRotation()).vyMetersPerSecond
+                        ).times(timeOfFlight));
+
+            Angle angle = getAngleToPos(
+                virtualTarg, //target(offset for lead)
                     drive.getPose().getTranslation()//drive pos
                         .plus(new Translation2d(//turret offest
                             Math.cos(drive.getRotation().getRadians())*TURRET_OFFSET.getX(),
@@ -111,43 +113,24 @@ public class Turret extends SubsystemBase {
                 .minus(Radians.of(drive.getPose().getRotation().getRadians()))
                 .plus(Radians.of(TURRET_THETA_COMP_FACTOR*drive.getAngulerVelocity().in(RadiansPerSecond)));
                 
-            Angle finalAngle = Degrees.of(convertToClosestBoundedTurretAngleDegrees(angle.in(Degrees), new Rotation2d(in.filteredAngle.in(Radians)), TURRET_ANGLE_FORWARD_LIM.in(Degrees), TURRET_ANGLE_REVERSE_LIM.in(Degrees)));
+            Angle finalAngle = Degrees.of(convertToClosestBoundedTurretAngleDegrees(angle.in(Degrees), new Rotation2d(in.angle.in(Radians)), TURRET_ANGLE_LIM.in(Degrees), -TURRET_ANGLE_LIM.in(Degrees)));
             io.setGoal(finalAngle);
 
             ready = in.atSetpoint;
 
             Logger.recordOutput("Subsystems/Turret/track/angle targeted", finalAngle);
             Logger.recordOutput("Subsystems/Turret/track/init angle targeted", angle);
+            Logger.recordOutput("Subsystems/Turret/track/lead time", Seconds.of(timeOfFlight));
             Logger.recordOutput("Subsystems/Turret/track/target pos", targ.get());
+            Logger.recordOutput("Subsystems/Turret/track/virtual target pos", virtualTarg);
             
         }, this).finallyDo(() -> {
             Logger.recordOutput("Subsystems/Turret/track/angle targeted", Double.NaN, Rotations);
             Logger.recordOutput("Subsystems/Turret/track/init angle targeted", Double.NaN, Rotations);
+            Logger.recordOutput("Subsystems/Turret/track/lead time", Double.NaN, Seconds);
             Logger.recordOutput("Subsystems/Turret/track/target pos", (Translation2d)null);
+            Logger.recordOutput("Subsystems/Turret/track/virtual target pos", (Translation2d)null);
         }).withName("track position");
-    }
-    
-    public Command trackWithLead(){
-        return Commands.run(() -> {
-
-            Angle angle = SOTMSolver.getInstance().getAngle(false)
-                .minus(Radians.of(drive.getPose().getRotation().getRadians()))
-                .plus(Radians.of(TURRET_THETA_COMP_FACTOR*drive.getAngulerVelocity().in(RadiansPerSecond)));
-                
-            Angle finalAngle = Degrees.of(convertToClosestBoundedTurretAngleDegrees(angle.in(Degrees), new Rotation2d(in.filteredAngle.in(Radians)), TURRET_ANGLE_FORWARD_LIM.in(Degrees), TURRET_ANGLE_REVERSE_LIM.in(Degrees)));
-            io.setGoal(finalAngle);
-
-            ready = in.atSetpoint;
-
-            Logger.recordOutput("Subsystems/Turret/track/angle targeted", finalAngle);
-            Logger.recordOutput("Subsystems/Turret/track/init angle targeted", angle);
-            Logger.recordOutput("Subsystems/Turret/track/target pos", SOTMSolver.getInstance().getTarget());
-            
-        }, this).finallyDo(() -> {
-            Logger.recordOutput("Subsystems/Turret/track/angle targeted", Double.NaN, Rotations);
-            Logger.recordOutput("Subsystems/Turret/track/init angle targeted", Double.NaN, Rotations);
-            Logger.recordOutput("Subsystems/Turret/track/target pos", (Translation2d)null);
-        }).withName("track position from SOTM");
     }
 
     public Command sysidQuasistatic(boolean reverse){
@@ -180,6 +163,10 @@ public class Turret extends SubsystemBase {
 
     public boolean isReady(){
         return ready;
+    }
+
+    private Angle getAngleToPos(Translation2d target, Translation2d curr){
+        return Radians.of(Math.atan2(target.getY()-curr.getY(), target.getX()-curr.getX()));
     }
 
     public Angle getAngle(){
