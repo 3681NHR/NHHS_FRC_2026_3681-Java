@@ -17,6 +17,7 @@ public interface IndexerIO {
     public default void updateInputs(IndexerIOInputs input) {}
     public default void setGoal(AngularVelocity goal) {}
     public default void setVoltage(Voltage volts) {}
+    public default void setOpenLoop(boolean openLoop) {}
     
     @AutoLog
     public class IndexerIOInputs{
