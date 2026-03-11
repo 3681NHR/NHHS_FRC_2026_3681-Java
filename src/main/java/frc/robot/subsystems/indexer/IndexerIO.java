@@ -15,9 +15,7 @@ import edu.wpi.first.units.measure.Voltage;
 public interface IndexerIO {
     
     public default void updateInputs(IndexerIOInputs input) {}
-    public default void setGoal(AngularVelocity goal) {}
-    public default void setVoltage(Voltage volts) {}
-    public default void setOpenLoop(boolean openLoop) {}
+    public default void setVout(Voltage volts) {}
     
     @AutoLog
     public class IndexerIOInputs{
@@ -26,9 +24,5 @@ public interface IndexerIO {
         public Voltage motorVoltageOut = Volts.of(0);
         public Current motorCurrentOut = Amps.of(0);
         public Temperature motorTemp = Kelvin.of(0);
-
-        public AngularVelocity goal = RadiansPerSecond.of(0);
-
-        public boolean openLoop = false;
     }
 }

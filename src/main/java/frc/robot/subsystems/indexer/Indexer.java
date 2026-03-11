@@ -1,14 +1,13 @@
 package frc.robot.subsystems.indexer;
 
-
-import static edu.wpi.first.units.Units.RPM;
+import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.constants.IndexerConstants;
 
 public class Indexer extends SubsystemBase {
     
@@ -25,15 +24,10 @@ public class Indexer extends SubsystemBase {
         Logger.processInputs("IO/Indexer", in);
     }
 
-    public Command run() {
-        return Commands.runOnce(() -> {
-            io.setGoal(IndexerConstants.INDEXER_SPEED);
-        }, this);
-    }
-
-    public Command stop() {
-        return Commands.runOnce(() -> {
-            io.setGoal(RPM.of(0));
-        }, this);
+    public Command voltageControl(Supplier<Voltage> volt){
+        return Commands.run(() -> {
+            io.setVout(volt.get());
+        }, this)
+        .withName("Voltage Control");
     }
 }
