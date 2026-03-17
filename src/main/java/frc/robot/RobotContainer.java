@@ -480,16 +480,16 @@ public class RobotContainer {
                 if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red) {
                     switch (operatorController.getPOV()) {
                         case ControllerMap.UP:
-                            operatorTrim = operatorTrim.plus(new Translation2d(-1,0));
+                            operatorTrim = operatorTrim.plus(new Translation2d(-0.1,0));
                             break;
                         case ControllerMap.DOWN:
-                            operatorTrim = operatorTrim.plus(new Translation2d(1,0));
+                            operatorTrim = operatorTrim.plus(new Translation2d(0.1,0));
                             break;
                         case ControllerMap.LEFT:
-                            operatorTrim = operatorTrim.plus(new Translation2d(0,-1));
+                            operatorTrim = operatorTrim.plus(new Translation2d(0,-0.1));
                             break;
                         case ControllerMap.RIGHT:
-                            operatorTrim = operatorTrim.plus(new Translation2d(0,1));
+                            operatorTrim = operatorTrim.plus(new Translation2d(0,0.1));
                             break;
                         default:
                             break;
@@ -497,16 +497,16 @@ public class RobotContainer {
                 } else {
                     switch (operatorController.getPOV()) {
                         case ControllerMap.UP:
-                            operatorTrim = operatorTrim.plus(new Translation2d(1,0));
+                            operatorTrim = operatorTrim.plus(new Translation2d(0.1,0));
                             break;
                         case ControllerMap.DOWN:
-                            operatorTrim = operatorTrim.plus(new Translation2d(-1,0));
+                            operatorTrim = operatorTrim.plus(new Translation2d(-0.1,0));
                             break;
                         case ControllerMap.LEFT:
-                            operatorTrim = operatorTrim.plus(new Translation2d(0,1));
+                            operatorTrim = operatorTrim.plus(new Translation2d(0,0.1));
                             break;
                         case ControllerMap.RIGHT:
-                            operatorTrim = operatorTrim.plus(new Translation2d(0,-1));
+                            operatorTrim = operatorTrim.plus(new Translation2d(0,-0.1));
                             break;
                         default:
                             break;
@@ -547,6 +547,7 @@ public class RobotContainer {
         autoChooser.update();
 
         Logger.recordOutput("Overrides/Operator Trim", operatorTrim);
+        Logger.recordOutput("DashboardData/Operator Trim", new double[]{operatorTrim.getX(), operatorTrim.getY()});
 
         Logger.recordOutput("AScope/Components", new Pose3d[]{
             new Pose3d(0,0,climber.getPosition().in(Meters),new Rotation3d()),
