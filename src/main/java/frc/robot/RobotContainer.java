@@ -4,7 +4,6 @@ package frc.robot;
 
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj2.command.*;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import frc.robot.autos.AutoChooser;
 import frc.robot.commands.SwerveWheelCharacterization;
 import frc.robot.constants.Constants;
@@ -105,6 +104,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -165,11 +165,21 @@ public class RobotContainer {
     private final LoggedNetworkNumber manShooterRPM = new LoggedNetworkNumber("Manual/Shooter speed RPM", 0);
     private final LoggedNetworkNumber manTurretDegrees = new LoggedNetworkNumber("Manual/Turret angle degrees", 0);
 
+    /**
+     * Operator can use the D-Pad to "trim" the hub location, effectively trimming the turret shoot position.
+     */
+    private Translation2d operatorTrim;
+
     private final Debouncer readyDebounce = new Debouncer(0.2);
 
     private DuelJoystickAxis driverSticks;
 
     public RobotContainer() {
+        Preferences.initDouble("operatorTrimX", 0);
+        Preferences.initDouble("operatorTrimY", 0);
+
+        operatorTrim = new Translation2d(Preferences.getDouble("operatorTrimX", 0), Preferences.getDouble("operatorTrimY", 0));
+
         try {
             // load test field layout for camera offset calculation, do not use otherwise
             // e = new AprilTagFieldLayout(Filesystem.getDeployDirectory().getAbsolutePath()
@@ -464,6 +474,55 @@ public class RobotContainer {
         );
 
         new Trigger(() -> buttons.get(0) && !DriverStation.isEnabled()).onTrue(hood.forceHome());
+
+        new Trigger(() -> operatorController.getPOV() != -1).onTrue(
+            new InstantCommand(() -> {
+                if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red) {
+                    switch (operatorController.getPOV()) {
+                        case ControllerMap.UP:
+                            operatorTrim = operatorTrim.plus(new Translation2d(-1,0));
+                            break;
+                        case ControllerMap.DOWN:
+                            operatorTrim = operatorTrim.plus(new Translation2d(1,0));
+                            break;
+                        case ControllerMap.LEFT:
+                            operatorTrim = operatorTrim.plus(new Translation2d(0,-1));
+                            break;
+                        case ControllerMap.RIGHT:
+                            operatorTrim = operatorTrim.plus(new Translation2d(0,1));
+                            break;
+                        default:
+                            break;
+                    }
+                } else {
+                    switch (operatorController.getPOV()) {
+                        case ControllerMap.UP:
+                            operatorTrim = operatorTrim.plus(new Translation2d(1,0));
+                            break;
+                        case ControllerMap.DOWN:
+                            operatorTrim = operatorTrim.plus(new Translation2d(-1,0));
+                            break;
+                        case ControllerMap.LEFT:
+                            operatorTrim = operatorTrim.plus(new Translation2d(0,1));
+                            break;
+                        case ControllerMap.RIGHT:
+                            operatorTrim = operatorTrim.plus(new Translation2d(0,-1));
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                SOTMSolver.getInstance().setOperatorTrim(operatorTrim);
+            })
+        );
+
+        // save operator trim to flash memory
+        new Trigger(() -> (operatorController.getRawButton(LOGO_LEFT))).onTrue(new InstantCommand(
+            () -> {
+                Preferences.setDouble("operatorTrimX", operatorTrim.getX());
+                Preferences.setDouble("operatorTrimY", operatorTrim.getY());
+            }
+        ));
     }
 
     public void periodic() {
@@ -483,7 +542,11 @@ public class RobotContainer {
         Logger.recordOutput("Subsystems/Turret/track/tracking hub", hubTrack);
         target = hubTrack ? hub : pass;
 
+        target = target.plus(operatorTrim);
+
         autoChooser.update();
+
+        Logger.recordOutput("Overrides/Operator Trim", operatorTrim);
 
         Logger.recordOutput("AScope/Components", new Pose3d[]{
             new Pose3d(0,0,climber.getPosition().in(Meters),new Rotation3d()),

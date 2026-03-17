@@ -17,8 +17,11 @@ public final class SOTMSolver extends SubsystemBase{
     private static SOTMSolver instance;
     private ShotParams params = new ShotParams(Meters.of(0), Radians.of(0), RPM.of(0), Seconds.of(0));
     private Translation2d target = new Translation2d();
+    private Translation2d originalTarget = target;
     private Drive drive;
     private Angle turretAngle = Radians.of(0);
+
+    private Translation2d operatorTrim = new Translation2d();
 
     private SOTMSolver(){
     };
@@ -36,7 +39,16 @@ public final class SOTMSolver extends SubsystemBase{
     }
 
     public void setTarget(Translation2d targ){
-        this.target = targ;
+        this.target = targ.plus(operatorTrim);
+        this.originalTarget = targ;
+    }
+
+    /**
+     * must call whenever the operator trim is updated
+    */
+    public void setOperatorTrim(Translation2d operatorTrim) {
+        this.operatorTrim = operatorTrim;
+        this.setTarget(originalTarget);
     }
 
     public void setDrive(Drive drive){
