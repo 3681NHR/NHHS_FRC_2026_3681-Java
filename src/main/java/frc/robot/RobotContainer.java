@@ -2,6 +2,7 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj2.command.*;
 import frc.robot.autos.AutoChooser;
@@ -452,6 +453,20 @@ public class RobotContainer {
         //set turret to preset angle mode
         new Trigger(() -> driverController.getRawButton(A)).onTrue(
             getManShooterCommand()
+        );
+
+
+        // toggle manual and tracking
+        new Trigger(() -> operatorController.getRawButton(RIGHT_STICK_BUTTON)).onTrue(new HiddenConditionalCommand(
+            getManShooterCommand(),
+            getTrackCommand(),
+            () -> !manual
+        ));
+
+        new Trigger(() -> {
+            return manual && Math.abs(operatorController.getRawAxis(RIGHT_STICK_X))+Math.abs(operatorController.getRawAxis(RIGHT_STICK_Y)) > 0.7;
+        }).whileTrue(
+            turret.manPos(() -> ExtraMath.getAngle(operatorController.getRawAxis(RIGHT_STICK_X), operatorController.getRawAxis(RIGHT_STICK_Y)).getMeasure(), true)
         );
 
         new Trigger(() -> driverController.getPOV() == ControllerMap.RIGHT).onTrue(hood.home());
