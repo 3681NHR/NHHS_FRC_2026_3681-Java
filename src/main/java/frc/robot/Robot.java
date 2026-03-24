@@ -1,5 +1,6 @@
 package frc.robot;
 
+import com.pathplanner.lib.commands.PathfindingCommand;
 import frc.utils.*;
 import frc.utils.motorWrappers.SparkMax;
 import frc.utils.motorWrappers.TalonFX;
@@ -96,6 +97,8 @@ public class Robot extends LoggedRobot {
         // motor wrappers
         SparkMax.initAlerts();
         TalonFX.initAlerts();
+
+        CommandScheduler.getInstance().schedule(PathfindingCommand.warmupCommand());
     }
 
     /**

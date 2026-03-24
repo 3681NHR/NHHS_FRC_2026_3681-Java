@@ -65,9 +65,7 @@ public class AutoFactory {
 
             List<PathPlannerTrajectoryState> traj = new LinkedList<>(getTraj(path).getStates());
 
-            for(int i=0; i<20-traj.size(); i++){
-                traj.add(traj.get(traj.size()-1));
-            }
+            
             return Pair.of(
                     new PathPlannerTrajectory(traj),
                     Commands.sequence(
@@ -90,9 +88,7 @@ public class AutoFactory {
 
             List<PathPlannerTrajectoryState> traj = new LinkedList<>(getTraj(path).getStates());
 
-            for(int i=0; i<20-traj.size(); i++){
-                traj.add(traj.get(traj.size()-1));
-            }
+            
         return Pair.of(
                 new PathPlannerTrajectory(traj),
                 Commands.sequence(
@@ -128,11 +124,10 @@ public class AutoFactory {
 
             PathPlannerPath path = PathPlannerPath.fromChoreoTrajectory("depot");
 
-            List<PathPlannerTrajectoryState> traj = new LinkedList<>(getTraj(path).getStates());
+            List<PathPlannerTrajectoryState> traj = getTraj(path).getStates();
 
-            for(int i=0; i<20-traj.size(); i++){
-                traj.add(traj.get(traj.size()-1));
-            }
+            System.out.println(new PathPlannerTrajectory(traj).getTotalTimeSeconds());
+            
             return Pair.of(
                     new PathPlannerTrajectory(traj),
                     Commands.parallel(
@@ -159,9 +154,7 @@ public class AutoFactory {
 
             List<PathPlannerTrajectoryState> traj = new LinkedList<>(getTraj(path).getStates());
 
-            for(int i=0; i<20-traj.size(); i++){
-                traj.add(traj.get(traj.size()-1));
-            }
+            
             return Pair.of(
                     new PathPlannerTrajectory(traj),
                     Commands.parallel(
@@ -211,9 +204,7 @@ public class AutoFactory {
 
             List<PathPlannerTrajectoryState> traj = new LinkedList<>(getTraj(path).getStates());
 
-            for(int i=0; i<20-traj.size(); i++){
-                traj.add(traj.get(traj.size()-1));
-            }
+            
         return Pair.of(
                 new PathPlannerTrajectory(traj),
                 Commands.sequence(
@@ -230,9 +221,7 @@ public class AutoFactory {
 
             List<PathPlannerTrajectoryState> traj = new LinkedList<>(getTraj(path).getStates());
 
-            for(int i=0; i<20-traj.size(); i++){
-                traj.add(traj.get(traj.size()-1));
-            }
+            
             return Pair.of(
                     new PathPlannerTrajectory(traj),
                     Commands.parallel(
