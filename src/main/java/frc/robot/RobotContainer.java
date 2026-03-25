@@ -10,7 +10,8 @@ import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
-import frc.robot.autos.AutoChooser;
+import frc.robot.autos.AutoGenerator;
+import frc.robot.oldautos.AutoChooser;
 import frc.robot.commands.SwerveWheelCharacterization;
 import frc.robot.constants.*;
 import frc.robot.constants.Constants.OperatorConstants;
@@ -72,7 +73,6 @@ import static frc.robot.constants.TurretConstants.*;
 
 import static frc.utils.ControllerMap.*;
 
-import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -83,7 +83,6 @@ import org.ironmaple.simulation.drivesims.COTS;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 import org.ironmaple.simulation.gamepieces.GamePieceProjectile;
-import org.ironmaple.simulation.seasonspecific.rebuilt2026.Arena2026Rebuilt;
 import org.ironmaple.simulation.seasonspecific.rebuilt2026.RebuiltFuelOnField;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -93,7 +92,6 @@ import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -374,6 +372,7 @@ public class RobotContainer {
         sysidChooser.addOption("launcher sysid dynamic forward", launcher.sysidDynamic(false));
         sysidChooser.addOption("launcher sysid dynamic reverse", launcher.sysidDynamic(true));
 
+        new AutoGenerator();
 
         turret.setDefaultCommand(
                 turret.manPos(turret::getAngle, false).ignoringDisable(true));

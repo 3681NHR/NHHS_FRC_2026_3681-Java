@@ -1,12 +1,10 @@
-package frc.robot.autos;
+package frc.robot.oldautos;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import frc.utils.AllianceUtility;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
@@ -118,18 +116,18 @@ public class AutoChooser {
     }
 
     private final List<AutoProgram> AUTO_PROGRAMS = List.of(
-            new AutoProgram("preload", AutoFactory::createPreloadAuto),
-            //depot autos
-            new AutoProgram("trench depot + AI", AutoFactory::createDepotAIAuto),
-            new AutoProgram("bump depot + AI", AutoFactory::createBumpDepotAIAuto),
-            //middle autos
-            new AutoProgram("Left insanity", AutoFactory::createLeftPassAuto),
-            new AutoProgram("Right not very insanity", AutoFactory::createRightPassAuto),
-            //ai only autos
-            new AutoProgram("AI right mid", AutoFactory::createRightAIMidAuto),
-            new AutoProgram("AI left mid", AutoFactory::createLeftAIMidAuto),
-            new AutoProgram("AI right zone", AutoFactory::createRightAIZoneAuto),
-            new AutoProgram("AI left zone", AutoFactory::createLeftAIZoneAuto)
+//            new AutoProgram("preload", AutoFactory::createPreloadAuto),
+//            //depot autos
+//            new AutoProgram("trench depot + AI", AutoFactory::createDepotAIAuto),
+//            new AutoProgram("bump depot + AI", AutoFactory::createBumpDepotAIAuto),
+//            //middle autos
+//            new AutoProgram("Left insanity", AutoFactory::createLeftPassAuto),
+//            new AutoProgram("Right not very insanity", AutoFactory::createRightPassAuto),
+//            //ai only autos
+//            new AutoProgram("AI right mid", AutoFactory::createRightAIMidAuto),
+//            new AutoProgram("AI left mid", AutoFactory::createLeftAIMidAuto),
+//            new AutoProgram("AI right zone", AutoFactory::createRightAIZoneAuto),
+//            new AutoProgram("AI left zone", AutoFactory::createLeftAIZoneAuto)
     );
 
 
