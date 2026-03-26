@@ -167,7 +167,10 @@ public class RobotContainer {
 
     private DuelJoystickAxis driverSticks;
 
+    private final AutoGenerator generator = new AutoGenerator();
+
     public RobotContainer() {
+        frc.robot.autos.Path.container = this;
         try {
             // load test field layout for camera offset calculation, do not use otherwise
             // e = new AprilTagFieldLayout(Filesystem.getDeployDirectory().getAbsolutePath()
@@ -372,8 +375,6 @@ public class RobotContainer {
         sysidChooser.addOption("launcher sysid dynamic forward", launcher.sysidDynamic(false));
         sysidChooser.addOption("launcher sysid dynamic reverse", launcher.sysidDynamic(true));
 
-        new AutoGenerator();
-
         turret.setDefaultCommand(
                 turret.manPos(turret::getAngle, false).ignoringDisable(true));
         launcher.setDefaultCommand(
@@ -527,7 +528,8 @@ public class RobotContainer {
     public Command getAutonomousCommand() {
         Command auto;
         if (sysidChooser.get() == null || DriverStation.isFMSAttached()) {
-            auto = autoChooser.getSelected();
+//            auto = autoChooser.getSelected();
+            auto = generator.getCommand();
         } else {
             auto = sysidChooser.get();
         }

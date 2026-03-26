@@ -1,12 +1,24 @@
 package frc.robot.autos;
 
+import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
+import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import frc.utils.LoggedField2d;
 import frc.utils.Periodic;
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import java.util.LinkedList;
+import java.util.List;
 import java.util.ListIterator;
+import java.util.Objects;
 
 public class AutoGenerator extends Periodic {
 
@@ -14,16 +26,22 @@ public class AutoGenerator extends Periodic {
     LoggedDashboardChooser<Path> chooser = new LoggedDashboardChooser<>("auto/selector");
     LoggedNetworkBoolean enter = new LoggedNetworkBoolean("SmartDashboard/auto/enter", false);
     LoggedNetworkBoolean back = new LoggedNetworkBoolean("SmartDashboard/auto/back", false);
-    Path[] options;
+    LoggedNetworkNumber timeSelector = new LoggedNetworkNumber("SmartDashboard/auto/play bar", 0);
+    LoggedNetworkBoolean animate = new LoggedNetworkBoolean("SmartDashboard/auto/play\\pause", false);
+    LoggedField2d field = new LoggedField2d();
 
     public AutoGenerator(){
         populateChooser(Path.START, true);
         generateText();
-        generateRoute();
+
+        SmartDashboard.putData("auto/map", field);
     }
 
     @Override
     public void update(){
+        if(animate.get()){
+            timeSelector.set(MathUtil.inputModulus(timeSelector.get()+(0.02/getTotalTime()), 0, 1));
+        }
         if(enter.getAsBoolean() && chooser.get() != null){
             enter(chooser.get());
             enter.set(false);
@@ -38,17 +56,24 @@ public class AutoGenerator extends Periodic {
                 populateChooser(Path.START, true);
             }
             generateText();
-            generateRoute();
 
             back.set(false);
         }
+        field.getObject("traj").setPoses(
+                sequence.stream()
+                        .map(path -> path.ppPath)
+                        .filter(traj -> traj != null && !traj.isEmpty())
+                        .flatMap(List::stream)
+                        .map(state -> state.pose)
+                        .toArray(Pose2d[]::new));
+        field.setRobotPose(getPoseAtTime(timeSelector.get()*getTotalTime()));
+        Logger.recordOutput("auto/selected time", timeSelector.get()*getTotalTime());
     }
     private void enter(Path e){
         if(chooser.get() != null) {
             sequence.add(chooser.get());
             populateChooser(chooser.get(), false);
             generateText();
-            generateRoute();
         }
     }
 
@@ -60,7 +85,7 @@ public class AutoGenerator extends Periodic {
             if(startingPoint){
                 chooser.addOption(String.format("start at %s", p.end), p);
             }else {
-                chooser.addOption(String.format("%s via: %s", p.end, p.name), p);
+                chooser.addOption(String.format("%s via %s", p.end, p.name), p);
             }
 
         }
@@ -81,10 +106,53 @@ public class AutoGenerator extends Periodic {
         } else {
             Logger.recordOutput("auto/generated", "select a starting point first!");
         }
-        System.out.println(sequence.size());
     }
 
-    private void generateRoute(){
+    @AutoLogOutput(key="auto/estimated time")
+    private double getTotalTime(){
+        if(sequence.size() <= 1){
+            return 0;
+        }
+        return mergeTrajectories(sequence.stream()
+                .map(path -> path.ppPath)
+                .filter( traj -> traj != null && !traj.isEmpty())
+                .map(PathPlannerTrajectory::new)
+                .toArray(PathPlannerTrajectory[]::new)).getTotalTimeSeconds();
+    }
 
+    private Pose2d getPoseAtTime(double time){
+        if(sequence.size() <= 1){
+            if(sequence.isEmpty()){
+                return new Pose2d();
+            }
+            //NOTE: this assumes the starting points all have at least 1 possible next path
+            return sequence.getFirst().options[0].ppPath.getFirst().pose;
+        }
+        return mergeTrajectories(sequence.stream()
+                .map(path -> path.ppPath)
+                .filter(traj -> traj != null && !traj.isEmpty())
+                .map(PathPlannerTrajectory::new)
+                .toArray(PathPlannerTrajectory[]::new)).sample(time).pose;
+    }
+
+
+    private PathPlannerTrajectory mergeTrajectories(PathPlannerTrajectory... in){
+        List<PathPlannerTrajectoryState> traj = new LinkedList<>();
+
+        double timeOffset = 0.0;
+        for (PathPlannerTrajectory trajectory : in) {
+            PathPlannerTrajectoryState[] states = trajectory.getStates().toArray(new PathPlannerTrajectoryState[0]);
+            double nextoffset = (states.length>0 ? states[states.length - 1].timeSeconds : 0.0);
+            for (PathPlannerTrajectoryState s : states) {
+//                s.timeSeconds += timeOffset;
+                traj.add(s.copyWithTime(s.timeSeconds + timeOffset));
+            }
+            timeOffset += nextoffset;
+        }
+        return new PathPlannerTrajectory(traj);
+    }
+
+    public Command getCommand(){
+        return Commands.sequence(sequence.stream().map(path -> path.Command.get()).toArray(Command[]::new));
     }
 }
