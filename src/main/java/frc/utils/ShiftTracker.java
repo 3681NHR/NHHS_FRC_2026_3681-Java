@@ -11,7 +11,7 @@ import org.littletonrobotics.junction.Logger;
 /**
  * Ultility class that keeps track of who can score when and for how long (dependent on who won auto)
  */
-public class ShiftTracker {
+public class ShiftTracker{
     private static MatchPhase phase = MatchPhase.UNKNOWN;
     private static final Timer matchTimer = new Timer();
 

@@ -2,7 +2,12 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.MatBuilder;
+import edu.wpi.first.math.Nat;
+import edu.wpi.first.math.StateSpaceUtil;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
@@ -67,6 +72,7 @@ import frc.utils.rumble.*;
 import frc.utils.Joystick.DuelJoystickAxis;
 
 import static edu.wpi.first.units.Units.*;
+import static frc.robot.constants.Constants.MODE;
 import static frc.robot.constants.HoodConstants.HOOD_MIN_ANGLE;
 import static frc.robot.constants.IntakeConstants.INTAKE_OFFSET;
 import static frc.robot.constants.TurretConstants.*;
@@ -77,12 +83,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.Random;
 
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.COTS;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 import org.ironmaple.simulation.gamepieces.GamePieceProjectile;
+import org.ironmaple.simulation.seasonspecific.rebuilt2026.Arena2026Rebuilt;
 import org.ironmaple.simulation.seasonspecific.rebuilt2026.RebuiltFuelOnField;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -104,6 +112,7 @@ import frc.robot.subsystems.kicker.KickerIO;
 import frc.robot.subsystems.kicker.KickerIOReal;
 import frc.robot.subsystems.kicker.KickerIOSim;
 import frc.robot.constants.Constants.RobotMode;
+import org.opencv.core.Mat;
 
 public class RobotContainer {
 
@@ -111,6 +120,9 @@ public class RobotContainer {
     private Angle hoodSetpoint = Degrees.zero();
     private AngularVelocity launcherSetpoint = RPM.zero();
     private Distance distanceToHub = Meters.zero();
+
+    private Random rand = new Random();
+    private double gauss = 0.4;
 
     private boolean isLutInProgress = false;
     private final LoggedDashboardChooser<Command> sysidChooser = new LoggedDashboardChooser<Command>("sysid auto chooser");
@@ -167,10 +179,11 @@ public class RobotContainer {
 
     private DuelJoystickAxis driverSticks;
 
-    private final AutoGenerator generator = new AutoGenerator();
+    private final AutoGenerator generator;
 
     public RobotContainer() {
         frc.robot.autos.Path.container = this;
+        generator = new AutoGenerator(this);
         try {
             // load test field layout for camera offset calculation, do not use otherwise
             // e = new AprilTagFieldLayout(Filesystem.getDeployDirectory().getAbsolutePath()
@@ -196,6 +209,7 @@ public class RobotContainer {
                     .withBumperSize(Inches.of(31), Inches.of(33));
 
             driveSim = new SwerveDriveSimulation(driveTrainSimulationConfig, Constants.STARTING_POSE);
+            SimulatedArena.overrideInstance(new Arena2026Rebuilt(false));
             SimulatedArena.getInstance().addDriveTrainSimulation(driveSim);
             //FIXME: this line is why your sim sucks
         //    ((Arena2026Rebuilt) SimulatedArena.getInstance()).setEfficiencyMode(false);
@@ -229,7 +243,7 @@ public class RobotContainer {
                         -1.0,
                         OperatorConstants.ROTATION_CURVE, 0.0));
 
-        switch (Constants.MODE) {
+        switch (MODE) {
             case REAL:
                 // Real robot, instantiate hardware IO implementations
                 vision = new Vision(
@@ -388,6 +402,10 @@ public class RobotContainer {
     }
 
     private void configureBindings() {
+        new Trigger(() -> driverController.getRawButton(11) && MODE == RobotMode.SIM).onTrue(new InstantCommand( () -> {
+            ((Arena2026Rebuilt) SimulatedArena.getInstance()).outpostDump(AllianceUtility.getAlliance() == Alliance.Blue);
+        }));
+
         new Trigger(TStop).whileTrue(
                 turret.stop().repeatedly().ignoringDisable(true).withInterruptBehavior(InterruptionBehavior.kCancelIncoming)
         );
@@ -512,6 +530,7 @@ public class RobotContainer {
         Logger.recordOutput("target dist", Meters.of(target.getDistance(drive.getPose().getTranslation())));
 
         SOTMSolver.getInstance().setLUT(hubTrack ? LaunchLUT.LUTHub : LaunchLUT.LUTPass);
+        gauss = rand.nextGaussian(0.4, 0.1);
     }
 
     public void simPeriodic() {
@@ -627,7 +646,7 @@ public class RobotContainer {
                 fuel.enableBecomesGamePieceOnFieldAfterTouchGround();
                 SimulatedArena.getInstance().addGamePieceProjectile(fuel);
             }
-        }).andThen(new WaitCommand(0.25)).repeatedly();
+        }).andThen(new WaitCommand(gauss)).repeatedly();
     }
 
     @AutoLogOutput
@@ -673,7 +692,7 @@ public class RobotContainer {
                                         kicker.feed(),
                                         indexer.feed()
                                 ).withName("shoot"),
-                                () -> Constants.MODE == RobotMode.SIM
+                                () -> MODE == RobotMode.SIM
                         ),
                         Commands.run(() -> {}),
                         //block scoring if hub is disabled, still allows passing
@@ -733,5 +752,8 @@ public class RobotContainer {
 
     public Command intake() {
         return intake.intake();
+    }
+    public Hood getHood(){
+        return hood;
     }
 }

@@ -13,7 +13,7 @@ public class AllianceUtility {
 
     private static final double FIELD_LENGTH_METERS = 16.54;
     private static final double FIELD_WIDTH_METERS = 8.07;
-    private static final Pose2d FIELD_CENTER_POINT = new Pose2d(FIELD_LENGTH_METERS / 2.0, FIELD_WIDTH_METERS / 2.0, Rotation2d.kZero);
+    public static final Pose2d FIELD_CENTER_POINT = new Pose2d(FIELD_LENGTH_METERS / 2.0, FIELD_WIDTH_METERS / 2.0, Rotation2d.kZero);
 
     public static Alliance getAlliance() {
         return latestAlliance;

@@ -4,9 +4,12 @@ import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.RobotContainer;
+import frc.utils.AllianceUtility;
 import frc.utils.LoggedField2d;
 import frc.utils.Periodic;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -29,8 +32,10 @@ public class AutoGenerator extends Periodic {
     LoggedNetworkNumber timeSelector = new LoggedNetworkNumber("SmartDashboard/auto/play bar", 0);
     LoggedNetworkBoolean animate = new LoggedNetworkBoolean("SmartDashboard/auto/play\\pause", false);
     LoggedField2d field = new LoggedField2d();
+    RobotContainer container;
 
-    public AutoGenerator(){
+    public AutoGenerator(RobotContainer container){
+        this.container = container;
         populateChooser(Path.START, true);
         generateText();
 
@@ -67,6 +72,9 @@ public class AutoGenerator extends Periodic {
                         .map(state -> state.pose)
                         .toArray(Pose2d[]::new));
         field.setRobotPose(getPoseAtTime(timeSelector.get()*getTotalTime()));
+        if(!sequence.isEmpty() && sequence.getLast().ppPath != null)
+            field.getObject("endPose").setPose(sequence.getLast().ppPath.getLast().pose);
+        field.getObject("currPose").setPose(AllianceUtility.flipPose(container.getDrive().getPose().rotateAround(AllianceUtility.FIELD_CENTER_POINT.getTranslation(), Rotation2d.k180deg)));
         Logger.recordOutput("auto/selected time", timeSelector.get()*getTotalTime());
     }
     private void enter(Path e){

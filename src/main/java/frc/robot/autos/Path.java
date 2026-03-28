@@ -3,7 +3,6 @@ package frc.robot.autos;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
-import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -11,104 +10,207 @@ import frc.robot.RobotContainer;
 import frc.robot.constants.DriveConstants;
 
 import java.util.LinkedList;
-import java.util.List;
 import java.util.function.Supplier;
-
-import static edu.wpi.first.units.Units.Seconds;
 
 /**
  * enum containing all paths
  * <p>the length of the trajectory should be the same as the execution time of the command for preview accuracy</p>
  */
 public enum Path {
-    A(
+    L_TRENCH_TO_DEPOT(
             "Right of depot",
             new Path[]{},//initialized in static block
             getChoreoTraj("A"),
             "path a",
-            () -> followChoreoPath("A")
+            () -> Commands.parallel(
+                    followChoreoPath("A"),
+                    Commands.waitSeconds(1).andThen(
+                            Commands.parallel(
+                                    track(),
+                                    intake()
+                            )
+                    ),
+                    Commands.waitSeconds(2.7).andThen(shoot())
+            )
     ),
-    B(
+    L_BUMP_TO_DEPOT(
             "Right of depot",
             new Path[]{},//initialized in static block
             addDelayToStart(getChoreoTraj("B"), 1),
             "path b",
-            () -> followChoreoPath("B")
+            () -> Commands.parallel(
+                    followChoreoPath("B"),
+                    Commands.waitSeconds(1).andThen(
+                            Commands.parallel(
+                                    track(),
+                                    intake()
+                            )
+                    ),
+                    Commands.waitSeconds(2.7).andThen(shoot())
+            )
     ),
-    C(
+    MIDDLE(
             "Middle of zone",
             new Path[]{},//initialized in static block
             getChoreoTraj("C"),
             "path c",
-            () -> followChoreoPath("C")
+            () -> Commands.sequence(
+                    followChoreoPath("C"),
+                    Commands.parallel(
+                        track(),
+                        shoot()
+                    )
+            )
     ),
-    D(
+    R_BUMP_TO_OUTPOST(
             "Outpost",
             new Path[]{},//initialized in static block
             getChoreoTraj("D"),
             "path d",
-            () -> followChoreoPath("D")
+            () -> Commands.parallel(
+                    followChoreoPath("D"),
+                    Commands.waitSeconds(1).andThen(
+                            Commands.parallel(
+                                    track(),
+                                    intake()
+                            )
+                    ),
+                    Commands.waitSeconds(2.5).andThen(shoot())
+            )
     ),
-    E(
+    MIDDLE_TO_OUTPOST(
             "Outpost",
             new Path[]{},//initialized in static block
             getChoreoTraj("E"),
             "path e",
-            () -> followChoreoPath("E")
+            () -> Commands.parallel(
+                    followChoreoPath("E"),
+                    Commands.waitSeconds(1).andThen(
+                            Commands.parallel(
+                                    track(),
+                                    intake()
+                            )
+                    ),
+                    Commands.waitSeconds(2.6).andThen(shoot())
+            )
     ),
-    F(
+    R_TRENCH_TO_OUTPOST(
             "Outpost",
             new Path[]{},//initialized in static block
             getChoreoTraj("F"),
             "path f",
-            () -> followChoreoPath("F")
+            () -> Commands.parallel(
+                    followChoreoPath("F"),
+                    Commands.waitSeconds(1).andThen(
+                            Commands.parallel(
+                                    track(),
+                                    intake()
+                            )
+                    ),
+                    Commands.waitSeconds(2.5).andThen(shoot())
+            )
     ),
-    G(
+    L_TRENCH_TO_MID_PICKUP(
             "Left side of neutral zone",
             new Path[]{},//initialized in static block
             getChoreoTraj("G"),
-            "path g",
-            () -> followChoreoPath("G")
+            "path g(intake only)",
+            () -> Commands.deadline(
+                    followChoreoPath("G"),
+                    Commands.waitSeconds(1.5).andThen(intake())
+            )
     ),
-    H(
+    L_TRENCH_TO_MID_PASS(
+            "Left side of neutral zone",
+            new Path[]{},//initialized in static block
+            getChoreoTraj("G"),
+            "path g(pass)",
+            () -> Commands.deadline(
+                    followChoreoPath("G"),
+                    Commands.waitSeconds(1).andThen(track()),
+                    Commands.waitSeconds(1.5).andThen(intake()),
+                    Commands.waitSeconds(2.7).andThen(shoot())
+            )
+    ),
+    R_TRENCH_TO_MID_PICKUP(
             "Right side of neutral zone",
             new Path[]{},//initialized in static block
             getChoreoTraj("H"),
-            "path h",
-            () -> followChoreoPath("H")
+            "path h(intake only)",
+            () -> Commands.deadline(
+                    followChoreoPath("H"),
+                    Commands.waitSeconds(1.5).andThen(intake())
+            )
     ),
-    I(
+    R_TRENCH_TO_MID_PASS(
+            "Right side of neutral zone",
+            new Path[]{},//initialized in static block
+            getChoreoTraj("H"),
+            "path h(pass)",
+            () -> Commands.deadline(
+                    followChoreoPath("H"),
+                    Commands.waitSeconds(1).andThen(track()),
+                    Commands.waitSeconds(1.5).andThen(intake()),
+                    Commands.waitSeconds(2.7).andThen(shoot())
+            )
+    ),
+    L_MID_TO_L_TRENCH(
             "Left trench",
             new Path[]{},//initialized in static block
             getChoreoTraj("I"),
             "path i",
-            () -> followChoreoPath("I")
+            () -> Commands.deadline(
+                    followChoreoPath("I"),
+                    lowerHood()
+                    )
     ),
-    J(
+    R_MID_TO_R_TRENCH(
             "Right trench",
             new Path[]{},//initialized in static block
             getChoreoTraj("J"),
             "path j",
-            () -> followChoreoPath("J")
+            () -> Commands.deadline(
+                    followChoreoPath("J"),
+                    lowerHood()
+                    )
     ),
-    K(
+    L_MID_TO_L_BUMP(
             "Left bump",new Path[]{},//initialized in static block
-            addDelayToEnd(getChoreoTraj("K"), 1),
+            getChoreoTraj("K"),
             "path k",
             () -> followChoreoPath("K")
     ),
-    L(
+    L_MID_TO_L_BUMP_AND_FIRE(
+            "Fire at left bump(5 sec)",new Path[]{},//initialized in static block
+            addDelayToEnd(getChoreoTraj("K"), 5),
+            "path k(with pause)",
+            () -> Commands.deadline(
+                    followChoreoPath("K").andThen(shoot().withTimeout(5)),
+                    track()
+            )
+    ),
+    R_MID_TO_R_BUMP(
             "Right bump",
             new Path[]{},//initialized in static block//initialized in static block
             getChoreoTraj("L"),
             "path l",
             () -> followChoreoPath("L")
     ),
-    START_L_TRENCH("Left trench" , new Path[]{A, G}, null, "", Commands::none),
-    START_L_BUMP(  "Left bump"   , new Path[]{B},    null,   "", Commands::none),
-    START_MID(     "Middle start", new Path[]{C, E}, null,      "", Commands::none),
-    START_R_BUMP(  "Right bump"  , new Path[]{D},    null,   "", Commands::none),
-    START_R_TRENCH("Right trench", new Path[]{F, H}, null, "", Commands::none),
+    R_MID_TO_R_BUMP_AND_FIRE(
+            "fire at right bump(5 sec)",
+            new Path[]{},//initialized in static block//initialized in static block
+            getChoreoTraj("L"),
+            "path l(with pause)",
+            () -> Commands.deadline(
+                    followChoreoPath("L").andThen(shoot().withTimeout(5)),
+                    track()
+            )
+    ),
+    START_L_TRENCH("Left trench" , new Path[]{}, null, "", Commands::none),
+    START_L_BUMP(  "Left bump"   , new Path[]{},    null,   "", Commands::none),
+    START_MID(     "Middle start", new Path[]{}, null,      "", Commands::none),
+    START_R_BUMP(  "Right bump"  , new Path[]{},    null,   "", Commands::none),
+    START_R_TRENCH("Right trench", new Path[]{}, null, "", Commands::none),
     START("", new Path[]{
             START_L_TRENCH,
             START_L_BUMP,
@@ -151,12 +253,13 @@ public enum Path {
             return new LinkedList<>();
         }
     }
+
     private static Command followChoreoPath(String pathName) {
         try {
             return container.getDrive().followPath(PathPlannerPath.fromChoreoTrajectory(pathName));
         } catch (Exception e){
             e.printStackTrace();
-            return null;
+            return Commands.none();
         }
     }
 
@@ -187,18 +290,46 @@ public enum Path {
         return traj;
     }
 
+    private static Command intake(){
+        return container.intake();
+    }
+    private static Command shoot(){
+        return container.fire();
+    }
+    private static Command track(){
+        return container.getTrackCommand();
+    }
+    private static Command lowerHood(){
+        return container.getHood().retract();
+    }
+    private static Command agitate(){
+        return container.intake().withTimeout(1).andThen(Commands.waitSeconds(1)).repeatedly();
+    }
+
     static {
-        A.options = new Path[]{};
-        B.options = new Path[]{};
-        C.options = new Path[]{};
-        D.options = new Path[]{};
-        E.options = new Path[]{};
-        F.options = new Path[]{};
-        G.options = new Path[]{I, K};
-        H.options = new Path[]{J, L};
-        I.options = new Path[]{G, A};
-        J.options = new Path[]{H, F};
-        K.options = new Path[]{B};
-        L.options = new Path[]{D};
+        START_L_TRENCH.options = new Path[]{L_TRENCH_TO_MID_PASS, L_TRENCH_TO_MID_PICKUP,  L_TRENCH_TO_DEPOT};
+        START_L_BUMP.options   = new Path[]{L_BUMP_TO_DEPOT};
+        START_MID.options      = new Path[]{MIDDLE_TO_OUTPOST, MIDDLE};
+        START_R_BUMP.options   = new Path[]{R_BUMP_TO_OUTPOST};
+        START_R_TRENCH.options = new Path[]{R_TRENCH_TO_MID_PASS, R_TRENCH_TO_MID_PICKUP,  R_TRENCH_TO_OUTPOST};
+
+        L_TRENCH_TO_DEPOT.options = new Path[]{};
+        L_BUMP_TO_DEPOT.options = new Path[]{};
+        MIDDLE.options = new Path[]{};
+        R_BUMP_TO_OUTPOST.options = new Path[]{};
+        MIDDLE_TO_OUTPOST.options = new Path[]{};
+        R_TRENCH_TO_OUTPOST.options = new Path[]{};
+        L_TRENCH_TO_MID_PASS.options = new Path[]{L_MID_TO_L_TRENCH, L_MID_TO_L_BUMP, L_MID_TO_L_BUMP_AND_FIRE};
+        R_TRENCH_TO_MID_PASS.options = new Path[]{R_MID_TO_R_TRENCH, R_MID_TO_R_BUMP, R_MID_TO_R_BUMP_AND_FIRE};
+
+        L_TRENCH_TO_MID_PICKUP.options = L_TRENCH_TO_MID_PASS.options;
+        R_TRENCH_TO_MID_PICKUP.options = R_TRENCH_TO_MID_PASS.options;
+        L_MID_TO_L_TRENCH.options = START_L_TRENCH.options;
+        R_MID_TO_R_TRENCH.options = START_R_TRENCH.options;
+        L_MID_TO_L_BUMP_AND_FIRE.options = START_L_BUMP.options;
+        L_MID_TO_L_BUMP.options = START_L_BUMP.options;
+        R_MID_TO_R_BUMP_AND_FIRE.options = START_R_BUMP.options;
+        R_MID_TO_R_BUMP.options = START_R_BUMP.options;
+
     }
 }

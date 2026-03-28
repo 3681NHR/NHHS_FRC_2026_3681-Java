@@ -143,4 +143,7 @@ public class Hood extends SubsystemBase {
         return homing;
     }
 
+    public Command retract(){
+        return instantPositionControl(() -> HOOD_MIN_ANGLE);
+    }
 }
