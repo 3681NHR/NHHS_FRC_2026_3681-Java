@@ -9,7 +9,7 @@ public final class IndexerConstants {
     public static final int INDEXER_MOTOR_ID = 43;
 
     public static final boolean INDEXER_MOTOR_INVERT = false;
-    public static final Current INDEXER_MAX_CURRENT = Amps.of(30);
+    public static final Current INDEXER_MAX_CURRENT = Amps.of(40);
 
     public static final Voltage INDEXER_FEED_VOLTAGE = Volts.of(10);
 

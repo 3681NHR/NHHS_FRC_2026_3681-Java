@@ -185,7 +185,10 @@ public enum Path {
             addDelayToEnd(getChoreoTraj("K"), 5),
             "path k(with pause)",
             () -> Commands.deadline(
-                    followChoreoPath("K").andThen(shoot().withTimeout(5)),
+                    followChoreoPath("K").andThen(Commands.parallel(
+                            shoot(),
+                            agitate()
+                    ).withTimeout(5)),
                     track()
             )
     ),
@@ -202,7 +205,10 @@ public enum Path {
             getChoreoTraj("L"),
             "path l(with pause)",
             () -> Commands.deadline(
-                    followChoreoPath("L").andThen(shoot().withTimeout(5)),
+                    followChoreoPath("L").andThen(Commands.parallel(
+                            shoot(),
+                            agitate()
+                    ).withTimeout(5)),
                     track()
             )
     ),
@@ -294,7 +300,7 @@ public enum Path {
         return container.intake();
     }
     private static Command shoot(){
-        return container.fire();
+        return container.unload().withTimeout(0.2).andThen(container.fire());
     }
     private static Command track(){
         return container.getTrackCommand();

@@ -756,4 +756,8 @@ public class RobotContainer {
     public Hood getHood(){
         return hood;
     }
+
+    public Command unload(){
+        return kicker.reverse();
+    }
 }
