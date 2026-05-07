@@ -57,8 +57,8 @@ public final class Constants {
         public static final boolean STARTING_FOD = true;
     }
 
-    public static final int SPARKMAX_TARGET_FIRMWARE = 436273156;
-    public static final int TALONFX_TARGET_FIRMWARE = 436273409;
+    public static final int SPARKMAX_TARGET_FIRMWARE = 436273157;
+    public static final int TALONFX_TARGET_FIRMWARE = 436338688;
 
     public static final Temperature MAX_MOTOR_TEMP = Celsius.of(80);
 }
