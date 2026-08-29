@@ -1,3 +1,5 @@
+# THE REPOSITORY IS NO LONGER MAINTAINED. USE 3681NHR/NHHS_FRC_2026_3681 INSTEAD
+
 ## characterization
  - drive sysid
  - steer sysid(current tune should work across seasons)
