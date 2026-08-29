@@ -1,4 +1,4 @@
-# THE REPOSITORY IS NO LONGER MAINTAINED. USE 3681NHR/NHHS_FRC_2026_3681 INSTEAD
+> **Notice:** This repository is no longer maintained. Use [`3681NHR/NHHS_FRC_2026_3681`](https://github.com/3681NHR/NHHS_FRC_2026_3681) instead.
 
 ## characterization
  - drive sysid
