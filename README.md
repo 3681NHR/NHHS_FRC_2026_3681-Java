@@ -1,3 +1,5 @@
+> **Notice:** This repository is no longer maintained. Use [`3681NHR/NHHS_FRC_2026_3681`](https://github.com/3681NHR/NHHS_FRC_2026_3681) instead.
+
 ## characterization
  - drive sysid
  - steer sysid(current tune should work across seasons)
