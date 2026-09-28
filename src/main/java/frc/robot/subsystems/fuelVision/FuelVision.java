@@ -10,6 +10,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.units.Units;
 import frc.utils.ExtraMath;
 import org.littletonrobotics.junction.Logger;
 
@@ -26,7 +27,7 @@ public class FuelVision extends SubsystemBase {
     private final ArrayList<fuelData> newFuel = new ArrayList<>();
     private final Map<gridCoord, Set<fuelData>> fuelMap = new HashMap<>();
 
-    private List<Pair<Long, Pose2d>> driveHistory = new ArrayList<>(10);
+    private List<Pair<Double, Pose2d>> driveHistory = new ArrayList<>(10);
     ArrayList<Translation3d> cellsToRender = new ArrayList<>();
 
     public FuelVision(FuelVisionIO io, Supplier<Pose2d> pose){
@@ -40,23 +41,33 @@ public class FuelVision extends SubsystemBase {
         io.updateInputs(inputs);
         Logger.processInputs("IO/FuelVision", inputs);
 
-        long currTimestamp = Logger.getTimestamp();
 
         while(driveHistory.size() > 10){
             driveHistory.remove(0);
         }
 
-        driveHistory.add(new Pair<>(currTimestamp, pose.get()));
+        driveHistory.add(new Pair<>(Microseconds.of(Logger.getTimestamp()).in(Seconds), pose.get()));
 
         //only update if new data
         if(Double.isFinite(inputs.timestamp)) {
             newFuel.clear();
 
             int i = 0;
-            while(i < driveHistory.size()-2 && driveHistory.get(i+1).getFirst() > inputs.timestamp){
+            while(i < driveHistory.size()-1 && driveHistory.get(i+1).getFirst() < inputs.timestamp){
                 i++;
             }
-            Pose2d drivePos = driveHistory.get(i).getSecond();
+            Pose2d drivePos;
+            if(i+1 < driveHistory.size()) {
+                double t = (inputs.timestamp - driveHistory.get(i).getFirst()) / (driveHistory.get(i + 1).getFirst() - driveHistory.get(i).getFirst());
+
+                drivePos = new Pose2d(
+                        ExtraMath.lerp(driveHistory.get(i).getSecond().getX(), driveHistory.get(i + 1).getSecond().getX(), t),
+                        ExtraMath.lerp(driveHistory.get(i).getSecond().getY(), driveHistory.get(i + 1).getSecond().getY(), t),
+                        new Rotation2d(ExtraMath.lerp(driveHistory.get(i).getSecond().getRotation().getRadians(), driveHistory.get(i + 1).getSecond().getRotation().getRadians(), t))
+                );
+            } else {
+                drivePos = driveHistory.get(i).getSecond();
+            }
 
             for (FuelObservation o : inputs.observations) {
                 double d = (CAMERA_CONFIG.robotToCam.getZ() - FUEL_RADIUS.in(Meters)) /
@@ -89,7 +100,7 @@ public class FuelVision extends SubsystemBase {
                 .map(e -> new Translation3d(e.getX(), e.getY(), FUEL_RADIUS.in(Meters)))
                 .toArray(Translation3d[]::new));
 
-        //trajectory to render fov
+        //trajectory to render fov in ascope
         {
             Logger.recordOutput("Subsystems/Fuel Vision/fov", new Translation2d[]{
 

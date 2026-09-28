@@ -37,9 +37,9 @@ public class FuelVisionConstants {
 
     public static final Time FUEL_PERSISTANCE_TIME = Seconds.of(3);
     public static final Time FUEL_POV_CLEAR_GRACE_TIME = Milliseconds.of(200);
-    public static final Distance FUEL_OVERLAP_THRESH = Inches.of(4);
+    public static final Distance FUEL_OVERLAP_THRESH = Inches.of(2);
 
-    public static final Angle CAMERA_CLEAR_HFOV = Degrees.of(60);
+    public static final Angle CAMERA_CLEAR_HFOV = Degrees.of(50);
     public static final Distance MIN_CLEAR_DETECTION_DIST = Meters.of(1.0);
     public static final Distance MAX_CLEAR_DETECTION_DIST = Meters.of(5);
 
