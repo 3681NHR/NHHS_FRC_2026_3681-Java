@@ -65,9 +65,14 @@ public class FuelVision extends SubsystemBase {
                         ExtraMath.lerp(driveHistory.get(i).getSecond().getY(), driveHistory.get(i + 1).getSecond().getY(), t),
                         new Rotation2d(ExtraMath.lerp(driveHistory.get(i).getSecond().getRotation().getRadians(), driveHistory.get(i + 1).getSecond().getRotation().getRadians(), t))
                 );
+                Logger.recordOutput("Subsystems/Fuel Vision/debug/i+1 time", driveHistory.get(i+1).getFirst());
+                Logger.recordOutput("Subsystems/Fuel Vision/debug/lerp time", ExtraMath.lerp(driveHistory.get(i).getFirst(), driveHistory.get(i + 1).getFirst(), t));
             } else {
                 drivePos = driveHistory.get(i).getSecond();
             }
+            Logger.recordOutput("Subsystems/Fuel Vision/debug/frame time", inputs.timestamp);
+            Logger.recordOutput("Subsystems/Fuel Vision/debug/i time", driveHistory.get(i).getFirst());
+            Logger.recordOutput("Subsystems/Fuel Vision/debug/framePos", drivePos);
 
             for (FuelObservation o : inputs.observations) {
                 double d = (CAMERA_CONFIG.robotToCam.getZ() - FUEL_RADIUS.in(Meters)) /
