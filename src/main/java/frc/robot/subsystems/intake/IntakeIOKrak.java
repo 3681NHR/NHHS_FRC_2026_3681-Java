@@ -1,16 +1,21 @@
 package frc.robot.subsystems.intake;
 
+import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.revrobotics.PersistMode;
 import com.revrobotics.REVLibError;
-import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.units.Units;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.utils.controlWrappers.ArmFF;
@@ -18,19 +23,23 @@ import frc.utils.controlWrappers.ProfiledPID;
 import frc.utils.motorWrappers.SparkMax;
 import frc.utils.motorWrappers.TalonFX;
 
-import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.*;
 import static frc.robot.constants.IntakeConstants.*;
 
 public class IntakeIOKrak implements IntakeIO {
 
     //  Roller
     private final TalonFX rollerMotor = new TalonFX(INTAKE_ROLLER_MOTOR_ID);
+    private final StatusSignal<Voltage> rollerMotorVoltage = rollerMotor.getMotorVoltage();
+    private final StatusSignal<Temperature> rollerMotorTemp = rollerMotor.getDeviceTemp();
+    private final StatusSignal<Current> rollerMotorCurrent = rollerMotor.getSupplyCurrent();
+    private final StatusSignal<AngularVelocity> rollerMotorSpeed = rollerMotor.getVelocity();
 
+    private final VoltageOut rollerMotorVoltageControl = new VoltageOut(0);
     private final Alert rollerMotorDisconnect = new Alert("Intake roller Spark disconnected!", AlertType.kError);
 
     //  Pivot
-    private final TalonFX pivotMotor = new TalonFX(INTAKE_PIVOT_MOTOR_ID);
+    private final SparkMax pivotMotor = new SparkMax(INTAKE_PIVOT_MOTOR_ID, MotorType.kBrushless);
     private final CANcoder pivotEncoder = new CANcoder(INTAKE_PIVOT_ENCODER_ID);
 
     private final ProfiledPID pivotPID = new ProfiledPID(INTAKE_PIVOT_PID_GAINS);
@@ -55,11 +64,18 @@ public class IntakeIOKrak implements IntakeIO {
         pivotPID.setTolerance(INTAKE_PIVOT_TOLERANCE.in(Units.Radians));
 
         // Roller motor config
-        SparkMaxConfig rollerCfg = new SparkMaxConfig();
-        rollerCfg.idleMode(IdleMode.kBrake)
-                 .inverted(INTAKE_ROLLER_INVERTED)
-                 .smartCurrentLimit((int)INTAKE_ROLLER_CURRENT_LIM.in(Amps));
-        rollerMotor.configure(rollerCfg, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+//        SparkMaxConfig rollerCfg = new SparkMaxConfig();
+//        rollerCfg.idleMode(IdleMode.kBrake)
+//                 .inverted(INTAKE_ROLLER_INVERTED)
+//                 .smartCurrentLimit((int)INTAKE_ROLLER_CURRENT_LIM.in(Amps));
+        TalonFXConfiguration rollerCfg = new TalonFXConfiguration()
+                .withMotorOutput(new MotorOutputConfigs()
+                        .withNeutralMode(NeutralModeValue.Coast)
+                        .withInverted(INTAKE_PIVOT_INVERTED ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive))
+                .withCurrentLimits(new CurrentLimitsConfigs()
+                        .withSupplyCurrentLimit(INTAKE_ROLLER_CURRENT_LIM));
+
+//        rollerMotor.configure(rollerCfg, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
         // Pivot motor config
         SparkMaxConfig pivotCfg = new SparkMaxConfig();
@@ -74,14 +90,13 @@ public class IntakeIOKrak implements IntakeIO {
     @Override
     public void updateInputs(IntakeIOInputs input) {
         //  Roller closed-loop
-        input.rollerVelocity = Units.RPM.of(rollerEncoder.getVelocity());
+        input.rollerVelocity = rollerMotorSpeed.getValue();
 
-        input.rollerVoltageOut = Units.Volts.of(rollerMotor.getAppliedOutput() * rollerMotor.getBusVoltage());
-        input.rollerCurrentOut = Units.Amps.of(rollerMotor.getOutputCurrent());
-        input.rollerTemp = Units.Celsius.of(rollerMotor.getMotorTemperature());
+        input.rollerVoltageOut = rollerMotorVoltage.getValue();
+        input.rollerCurrentOut = rollerMotorCurrent.getValue();
+        input.rollerTemp = rollerMotorTemp.getValue();
         
-        input.rollerConnected = rollerMotor.getLastError() != REVLibError.kCANDisconnected;
-        rollerMotorDisconnect.set(!input.rollerConnected);
+        input.rollerConnected = rollerMotor.isConnected();
 
         //  Pivot closed-loop 
         if (!pivotOpenLoop) {
@@ -111,7 +126,7 @@ public class IntakeIOKrak implements IntakeIO {
 
     @Override
     public void setRollerVoltage(Voltage voltage) {
-        rollerMotor.setVoltage(voltage);
+        rollerMotor.setControl(rollerMotorVoltageControl.withOutput(voltage));
     }
 
     @Override
