@@ -1,7 +1,12 @@
 package frc.robot.subsystems.indexer;
 
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.revrobotics.PersistMode;
 import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
@@ -32,15 +37,13 @@ public class IndexerIOKrak implements IndexerIO {
 
     public IndexerIOKrak() {
 
-        SparkMaxConfig kickerConfig = new SparkMaxConfig();
-        kickerConfig.inverted(INDEXER_MOTOR_INVERT).idleMode(IdleMode.kBrake).voltageCompensation(12)
-                .smartCurrentLimit((int) INDEXER_MAX_CURRENT.in(Amps));
-        kickerConfig.closedLoop.feedbackSensor(FeedbackSensor.kPrimaryEncoder);
-        kickerConfig.encoder.positionConversionFactor(POSITION_CONVERSION_FACTOR).velocityConversionFactor(VELOCITY_CONVERSION_FACTOR);
-
-        tryUntilOk(motor, 5, () -> motor.configure(kickerConfig, ResetMode.kResetSafeParameters,
-                PersistMode.kPersistParameters));
-
+        TalonFXConfiguration kickerconfig = new TalonFXConfiguration()
+                .withMotorOutput(new MotorOutputConfigs()
+                        .withInverted(INDEXER_MOTOR_INVERT ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive)
+                        .withNeutralMode(NeutralModeValue.Coast))
+                .withCurrentLimits(new CurrentLimitsConfigs()
+                        .withSupplyCurrentLimit(INDEXER_MAX_CURRENT));
+        motor.getConfigurator().apply(kickerconfig);
     }
 
     @Override

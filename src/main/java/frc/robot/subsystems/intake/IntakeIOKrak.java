@@ -64,18 +64,13 @@ public class IntakeIOKrak implements IntakeIO {
         pivotPID.setTolerance(INTAKE_PIVOT_TOLERANCE.in(Units.Radians));
 
         // Roller motor config
-//        SparkMaxConfig rollerCfg = new SparkMaxConfig();
-//        rollerCfg.idleMode(IdleMode.kBrake)
-//                 .inverted(INTAKE_ROLLER_INVERTED)
-//                 .smartCurrentLimit((int)INTAKE_ROLLER_CURRENT_LIM.in(Amps));
         TalonFXConfiguration rollerCfg = new TalonFXConfiguration()
                 .withMotorOutput(new MotorOutputConfigs()
                         .withNeutralMode(NeutralModeValue.Coast)
                         .withInverted(INTAKE_PIVOT_INVERTED ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive))
                 .withCurrentLimits(new CurrentLimitsConfigs()
                         .withSupplyCurrentLimit(INTAKE_ROLLER_CURRENT_LIM));
-
-//        rollerMotor.configure(rollerCfg, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+            rollerMotor.getConfigurator().apply(rollerCfg);
 
         // Pivot motor config
         SparkMaxConfig pivotCfg = new SparkMaxConfig();
