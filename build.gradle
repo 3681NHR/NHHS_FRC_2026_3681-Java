@@ -11,6 +11,21 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
+sourceSets {
+    padcrafterProcessor {
+        java.setSrcDirs(["src/padcrafterProcessor/java"])
+        resources.setSrcDirs(["src/padcrafterProcessor/resources"])
+    }
+}
+
+def padcrafterProcessorOutput = sourceSets.padcrafterProcessor.output
+def annotationProcessorSourcesDirectory = layout.buildDirectory.dir(
+        "generated/sources/annotationProcessor/java/main")
+def generatedPadcrafterUrl = annotationProcessorSourcesDirectory.map {
+    it.file("padcrafter.url")
+}
+def padcrafterConfigDirectory = layout.buildDirectory.dir("generated/padcrafter")
+
 checkstyle {
     configFile = file("checkstyle.xml")
     toolVersion = "11.1.0"
@@ -63,6 +78,8 @@ dependencies {
     def akitJson = new groovy.json.JsonSlurper().parseText(new File(projectDir.getAbsolutePath() + "/vendordeps/AdvantageKit.json").text)
     annotationProcessor "org.littletonrobotics.akit:akit-autolog:$akitJson.version"
     annotationProcessor wpi.java.deps.wpilibAnnotations()
+    annotationProcessor files(padcrafterProcessorOutput)
+    compileOnly files(padcrafterProcessorOutput)
     implementation wpi.java.deps.wpilib()
     implementation wpi.java.vendor.java()
 
@@ -80,6 +97,7 @@ dependencies {
     nativeRelease wpi.java.vendor.jniRelease(wpi.platforms.desktop)
     simulationRelease wpi.sim.enableRelease()
 
+    testImplementation files(padcrafterProcessorOutput)
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.1'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
@@ -87,6 +105,22 @@ dependencies {
 test {
     useJUnitPlatform()
     systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
+}
+
+tasks.named("compileJava", JavaCompile) {
+    dependsOn tasks.named("padcrafterProcessorClasses")
+    options.annotationProcessorPath = configurations.annotationProcessor
+    outputs.dir(annotationProcessorSourcesDirectory)
+}
+
+tasks.register("padcrafterConfig", Sync) {
+    dependsOn tasks.named("compileJava")
+    from generatedPadcrafterUrl
+    into padcrafterConfigDirectory
+}
+
+tasks.named("build") {
+    dependsOn tasks.named("padcrafterConfig")
 }
 
 wpi.sim.addGui().defaultEnabled = true

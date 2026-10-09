@@ -68,8 +68,9 @@ import frc.robot.subsystems.vision.CameraIOPhotonSim;
 import frc.robot.subsystems.vision.Vision;
 import frc.utils.*;
 import frc.utils.Joystick;
-import frc.utils.rumble.*;
 import frc.utils.Joystick.DuelJoystickAxis;
+import frc.utils.padcrafter.Binding;
+import frc.utils.rumble.*;
 
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.constants.Constants.MODE;
@@ -424,62 +425,99 @@ public class RobotContainer {
         }));
 
         // move wheels to X, makes robot hard to push
-        new Trigger(() -> driverController.getRawButton(LOGO_RIGHT)).whileTrue(new InstantCommand(() -> {
+        @Binding("X Drive Lock")
+        Trigger xDriveLock = new Trigger(() -> driverController.getRawButton(X));
+        xDriveLock.whileTrue(new InstantCommand(() -> {
             drive.stopWithX();
         }, drive).repeatedly());
 
         // reset gyro angle
-        new Trigger(() -> driverController.getRawButton(LOGO_LEFT)).onTrue(new InstantCommand(() -> {
+        @Binding("Reset Gyro")
+        Trigger resetGyro = new Trigger(() -> driverController.getRawButton(LOGO_LEFT));
+        resetGyro.onTrue(new InstantCommand(() -> {
             drive.resetGyro(DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red ? Math.PI : 0);
             rumbler.overrideQue(RumblePreset.TAP.load());
         }));
 
         // toggle field oriented driving
-        new Trigger(() -> driverController.getRawButton(LEFT_STICK_BUTTON)).onTrue(new InstantCommand(() -> {
+        @Binding("Toggle Field Orientation")
+        Trigger toggleFieldOrientation = new Trigger(
+                () -> driverController.getRawButton(LEFT_STICK_BUTTON));
+        toggleFieldOrientation.onTrue(new InstantCommand(() -> {
             drive.setFOD(!drive.getFOD());
             rumbler.overrideQue(RumblePreset.TAP.load());
         }));
-        new Trigger(() -> driverController.getRawAxis(RIGHT_TRIGGER) > 0.2).whileTrue(hood.go());
-        new Trigger(() -> driverController.getRawAxis(RIGHT_TRIGGER) > 0.7)
-                .whileTrue(fire());
-//                .onFalse(hood.positionControl(() -> HOOD_MIN_ANGLE));
+
+        Trigger hoodGo = new Trigger(() -> driverController.getRawAxis(RIGHT_TRIGGER) > 0.2);
+        hoodGo.whileTrue(hood.go());
+
+        @Binding("Fire")
+        Trigger fireBinding = new Trigger(() -> driverController.getRawAxis(RIGHT_TRIGGER) > 0.7);
+        fireBinding.whileTrue(fire());
+
         // intake :3
-        new Trigger(() -> driverController.getRawAxis(LEFT_TRIGGER) > 0.5)
-                .whileTrue(intake.intake());
+        @Binding("Intake")
+        Trigger intakeBinding = new Trigger(() -> driverController.getRawAxis(LEFT_TRIGGER) > 0.5);
+        intakeBinding.whileTrue(intake.intake());
 
         // force teleop drive
-        new Trigger(() -> driverController.getPOV() == UP).onTrue(drive.teleopDrive());
-
-        new Trigger(() -> driverController.getRawButton(X)).whileTrue(//lower hood
-                hood.positionControl(() -> HOOD_MIN_ANGLE).withInterruptBehavior(InterruptionBehavior.kCancelIncoming)
-        );
+        @Binding("Force Teleop Drive")
+        Trigger forceTeleopDrive = new Trigger(() -> driverController.getPOV() == UP);
+        forceTeleopDrive.onTrue(drive.teleopDrive());
+// FIXME: DO WE ACTUALLY NEED TS GNG
+//        @Binding("Lower Hood")
+//        Trigger lowerHood = new Trigger(() -> driverController.getRawButton(X));
+//        lowerHood.whileTrue(hood.positionControl(() -> HOOD_MIN_ANGLE)
+//                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
         // toggle auto track command
-        new Trigger(() -> driverController.getRawButton(B)).onTrue(
-                getTrackCommand()
-        );
+        @Binding("Toggle Auto Track")
+        Trigger toggleAutoTrack = new Trigger(() -> driverController.getRawButton(B));
+        toggleAutoTrack.onTrue(getTrackCommand());
 
         //set turret to preset angle mode
-        new Trigger(() -> driverController.getRawButton(A)).onTrue(
-            getManShooterCommand()
-        );
-        new Trigger(() -> driverController.getRawButton(Y)).onTrue(
-                new HiddenConditionalCommand(saveLutEntry(), startLutTimer(), () -> isLutInProgress)
-        );
-        new Trigger(() -> driverController.getPOV() == RIGHT).onTrue(hood.home());
-        new Trigger(() -> driverController.getPOV() == LEFT).onTrue(climber.home());
+        @Binding("Manual Targeting")
+        Trigger manualTargeting = new Trigger(() -> driverController.getRawButton(A));
+        manualTargeting.onTrue(getManShooterCommand());
 
-        new Trigger(() -> driverController.getRawButton(RB)).whileTrue(Commands.parallel(kicker.reverse(), indexer.reverse()));
-        new Trigger(() -> driverController.getRawButton(LB)).whileTrue(Commands.parallel(intake.outtake()));
+        // TODO: uncomment during LUT creation
+        //        @Binding("Save LUT Entry")
+        //        Trigger saveLutEntry = new Trigger(() -> driverController.getRawButton(Y));
+        //        saveLutEntry.onTrue(
+        //                new HiddenConditionalCommand(saveLutEntry(), startLutTimer(), () -> isLutInProgress));
 
-        new Trigger(() -> driverController.getPOV() == DOWN).onTrue(climber.toggle());
+        @Binding("Hood Home")
+        Trigger hoodHome = new Trigger(() -> driverController.getPOV() == RIGHT);
+        hoodHome.onTrue(hood.home());
 
-        new Trigger(() -> (inTrench() && autoTrench.getAsBoolean() && !DriverStation.isAutonomous()) || driverController.getRawButton(X)).whileTrue(
-                drive.TrenchAlignDrive()
-                    .alongWith(hood.instantPositionControl(() -> HOOD_MIN_ANGLE).withInterruptBehavior(InterruptionBehavior.kCancelIncoming)
-                    ).withName("trench mode")
-        );
-        //trench mode in auto - wont cancel path following
+        // FIXME: put climber on robot
+        //        @Binding("Climber Home")
+        //        Trigger climberHome = new Trigger(() -> driverController.getPOV() == LEFT);
+        //        climberHome.onTrue(climber.home());
+
+        @Binding("Unjam indexer")
+        Trigger reverseKickerIndexer = new Trigger(() -> driverController.getRawButton(RB));
+        reverseKickerIndexer.whileTrue(Commands.parallel(kicker.reverse(), indexer.reverse()));
+// FIXME: disabled outtake due to physical constraints
+//        @Binding("Outtake")
+//        Trigger outtake = new Trigger(() -> driverController.getRawButton(Y));
+//        outtake.whileTrue(Commands.parallel(intake.outtake(), indexer.reverse()));
+
+        // FIXME: put climber on robot
+        //        @Binding("Toggle Climber")
+        //        Trigger toggleClimber = new Trigger(() -> driverController.getPOV() == DOWN);
+        //        toggleClimber.onTrue(climber.toggle());
+// FIXME: do we actually need this code gng
+//        @Binding("Trench Align")
+//        Trigger trenchAlign = new Trigger(() -> (inTrench() && autoTrench.getAsBoolean()
+//                && !DriverStation.isAutonomous()) || driverController.getRawButton(X));
+//        trenchAlign.whileTrue(
+//                drive.TrenchAlignDrive()
+//                    .alongWith(hood.instantPositionControl(() -> HOOD_MIN_ANGLE)
+//                            .withInterruptBehavior(InterruptionBehavior.kCancelIncoming))
+//                    .withName("trench mode")
+//        );
+        //trench mode in auto - won't cancel path following
 //        new Trigger(() -> (inTrench() && autoTrench.getAsBoolean() && DriverStation.isAutonomous())).whileTrue(
 //                hood.instantPositionControl(() -> HOOD_MIN_ANGLE).withInterruptBehavior(InterruptionBehavior.kCancelIncoming
 //                ).withName("trench mode(auto)")
