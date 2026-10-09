@@ -33,7 +33,7 @@ import frc.robot.constants.Constants;
 public class Robot extends LoggedRobot {
     private Command autonomousCommand;
 
-    private RobotContainer robotContainer;
+//    private RobotContainer //robotContainer;
 
     /**
      * This function is run when the robot is first started up and should be used
@@ -88,7 +88,7 @@ public class Robot extends LoggedRobot {
         // initalize robot container
         // LoggedPowerDistribution.getInstance(1, ModuleType.kRev);
         Logger.start();
-        robotContainer = new RobotContainer();
+//        //robotContainer = new RobotContainer();
 
         // start timerhandler
         TimerHandler.init();
@@ -98,7 +98,7 @@ public class Robot extends LoggedRobot {
         SparkMax.initAlerts();
         TalonFX.initAlerts();
 
-        CommandScheduler.getInstance().schedule(PathfindingCommand.warmupCommand());
+//        CommandScheduler.getInstance().schedule(PathfindingCommand.warmupCommand());
     }
 
     /**
@@ -120,14 +120,14 @@ public class Robot extends LoggedRobot {
         // and running subsystem periodic() methods. This must be called from the
         // robot's periodic
         // block in order for anything in the Command-based framework to work.
-        CommandScheduler.getInstance().run();
+//        CommandScheduler.getInstance().run();
         TimerHandler.update();
 
-        robotContainer.periodic();
+//        //robotContainer.periodic();
 //        SparkMax.periodic();
 //        TalonFX.periodic();
         ShiftTracker.update();
-        Periodic.updateAll();
+//        Periodic.updateAll();
     }
 
     /** This function is called once each time the robot enters Disabled mode. */
@@ -138,7 +138,7 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void disabledPeriodic() {
-        AllianceUtility.update();
+//        AllianceUtility.update();
     }
 
     /**
@@ -148,19 +148,19 @@ public class Robot extends LoggedRobot {
     @Override
     public void autonomousInit() {
         //  Elastic.selectTab(0);
-        autonomousCommand = robotContainer.getAutonomousCommand();
+//        autonomousCommand = //robotContainer.getAutonomousCommand();
 
-        robotContainer.enableAuto();
+        //robotContainer.enableAuto();
 
         // schedule the autonomous command (example)
-        if (autonomousCommand != null) {
-            CommandScheduler.getInstance().schedule(autonomousCommand);
-        }
-        if(RobotBase.isSimulation()){
-            SimulatedArena.getInstance().resetFieldForAuto();
-        }
-        TimerHandler.initAuto();
-        ShiftTracker.start();
+//        if (autonomousCommand != null) {
+//            CommandScheduler.getInstance().schedule(autonomousCommand);
+//        }
+//        if(RobotBase.isSimulation()){
+//            SimulatedArena.getInstance().resetFieldForAuto();
+//        }
+//        TimerHandler.initAuto();
+//        ShiftTracker.start();
 
     }
 
@@ -178,7 +178,7 @@ public class Robot extends LoggedRobot {
         // continue until interrupted by another command, remove
         // this line or comment it out.
         TimerHandler.initTeleop();
-        robotContainer.enableTeleop();
+        //robotContainer.enableTeleop();
 
         if (autonomousCommand != null) {
             autonomousCommand.cancel();
@@ -193,9 +193,9 @@ public class Robot extends LoggedRobot {
     @Override
     public void teleopPeriodic() {
 
-        // m_robotContainer.Periodic();
+        // m_//robotContainer.Periodic();
 
-        TimerHandler.updateTeleop();
+//        TimerHandler.updateTeleop();
     }
 
     @Override
@@ -217,10 +217,10 @@ public class Robot extends LoggedRobot {
     /** This function is called periodically whilst in simulation. */
     @Override
     public void simulationPeriodic() {
-        robotContainer.simPeriodic();
+        //robotContainer.simPeriodic();
 
         // update battery voltage(set as roborio input voltage)
-        BatteryVoltageSim.getInstance().calculateVoltage();
+//        BatteryVoltageSim.getInstance().calculateVoltage();
     }
 
     @Override
