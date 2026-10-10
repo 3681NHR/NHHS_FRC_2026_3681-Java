@@ -53,25 +53,28 @@ public class FuelVision extends SubsystemBase {
             newFuel.clear();
 
             int i = 0;
+            
             while(i < driveHistory.size()-1 && driveHistory.get(i+1).getFirst() < inputs.timestamp){
                 i++;
             }
+            List<Pair<Double, Pose2d>> getI = driveHistory.get(i);
             Pose2d drivePos;
             if(i+1 < driveHistory.size()) {
-                double t = (inputs.timestamp - driveHistory.get(i).getFirst()) / (driveHistory.get(i + 1).getFirst() - driveHistory.get(i).getFirst());
+                
+                double t = (inputs.timestamp - getI.getFirst()) / ((getI+1).getFirst() - getI.getFirst());
 
                 drivePos = new Pose2d(
-                        ExtraMath.lerp(driveHistory.get(i).getSecond().getX(), driveHistory.get(i + 1).getSecond().getX(), t),
-                        ExtraMath.lerp(driveHistory.get(i).getSecond().getY(), driveHistory.get(i + 1).getSecond().getY(), t),
-                        new Rotation2d(ExtraMath.lerp(driveHistory.get(i).getSecond().getRotation().getRadians(), driveHistory.get(i + 1).getSecond().getRotation().getRadians(), t))
+                        ExtraMath.lerp(getI.getSecond().getX(), (getI+1).getSecond().getX(), t),
+                        ExtraMath.lerp(getI.getSecond().getY(), (getI+1).getSecond().getY(), t),
+                        new Rotation2d(ExtraMath.lerp(getI.getSecond().getRotation().getRadians(), (getI+1).getSecond().getRotation().getRadians(), t))
                 );
                 Logger.recordOutput("Subsystems/Fuel Vision/debug/i+1 time", driveHistory.get(i+1).getFirst());
-                Logger.recordOutput("Subsystems/Fuel Vision/debug/lerp time", ExtraMath.lerp(driveHistory.get(i).getFirst(), driveHistory.get(i + 1).getFirst(), t));
+                Logger.recordOutput("Subsystems/Fuel Vision/debug/lerp time", ExtraMath.lerp(getI.getFirst(), (getI+1).getFirst(), t));
             } else {
-                drivePos = driveHistory.get(i).getSecond();
+                drivePos = getI.getSecond();
             }
             Logger.recordOutput("Subsystems/Fuel Vision/debug/frame time", inputs.timestamp);
-            Logger.recordOutput("Subsystems/Fuel Vision/debug/i time", driveHistory.get(i).getFirst());
+            Logger.recordOutput("Subsystems/Fuel Vision/debug/i time", getI.getFirst());
             Logger.recordOutput("Subsystems/Fuel Vision/debug/framePos", drivePos);
 
             for (FuelObservation o : inputs.observations) {
