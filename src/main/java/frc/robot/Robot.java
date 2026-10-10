@@ -124,8 +124,8 @@ public class Robot extends LoggedRobot {
         TimerHandler.update();
 
         robotContainer.periodic();
-//        SparkMax.periodic();
-//        TalonFX.periodic();
+        SparkMax.periodic();
+        TalonFX.periodic();
         ShiftTracker.update();
         Periodic.updateAll();
     }
@@ -193,7 +193,7 @@ public class Robot extends LoggedRobot {
     @Override
     public void teleopPeriodic() {
 
-        // m_robotContainer.Periodic();
+         robotContainer.periodic();
 
         TimerHandler.updateTeleop();
     }

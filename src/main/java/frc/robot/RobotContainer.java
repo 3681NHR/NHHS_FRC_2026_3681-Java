@@ -35,14 +35,8 @@ import frc.robot.subsystems.hood.Hood;
 import frc.robot.subsystems.hood.HoodIO;
 import frc.robot.subsystems.hood.HoodIOReal;
 import frc.robot.subsystems.hood.HoodIOSim;
-import frc.robot.subsystems.indexer.Indexer;
-import frc.robot.subsystems.indexer.IndexerIO;
-import frc.robot.subsystems.indexer.IndexerIOReal;
-import frc.robot.subsystems.indexer.IndexerIOSim;
-import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.intake.IntakeIO;
-import frc.robot.subsystems.intake.IntakeIOReal;
-import frc.robot.subsystems.intake.IntakeIOSim;
+import frc.robot.subsystems.indexer.*;
+import frc.robot.subsystems.intake.*;
 import frc.robot.subsystems.launcher.Launcher;
 import frc.robot.subsystems.launcher.LauncherIO;
 import frc.robot.subsystems.launcher.LauncherIOReal;
@@ -267,14 +261,14 @@ public class RobotContainer {
                 fuelVision = new FuelVision(new FuelVisionIOPhoton(FuelVisionConstants.CAMERA_CONFIG), drive::getPose);
 
                 turret = new Turret(new TurretIOReal(), drive);
-                intake = new Intake(new IntakeIOReal());
+                intake = new Intake(new IntakeIOKrak());
                 launcher = new Launcher(new LauncherIOReal());
                 hood = new Hood(new HoodIOReal());
                 climber = new Climber(new ClimberIO() {
                 });//FIXME
                 kicker = new Kicker(new KickerIOReal());
                 buttons = new Buttons(new ButtonIODIO(0));
-                indexer = new Indexer(new IndexerIOReal());
+                indexer = new Indexer(new IndexerIOKrak());
                 break;
 
             case SIM:
@@ -301,7 +295,7 @@ public class RobotContainer {
                             driverSticks);
                     SOTMSolver.getInstance().setDrive(drive);
                     SOTMSolver.getInstance().calculate();
-                
+
                      fuelVision = new FuelVision(new FuelVisionIOPhotonSim(FuelVisionConstants.CAMERA_CONFIG, driveSim::getSimulatedDriveTrainPose), drive::getPose);
 //                    fuelVision = new FuelVision(new FuelVisionIO(){}, drive::getPose);
                     intake = new Intake(new IntakeIOSim(driveSim));
